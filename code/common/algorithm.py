@@ -24,7 +24,7 @@ class Algorithm:
         self.restore_list = []
         self.var_beta = self.m_var_beta
         self.learning_rate = self.m_learning_rate
-        self.target_embed_dim = Config.TARGET_EMBED_DIM
+        self.target_embed_dim = Config.TARGET_EMBED_DIM       # self.target_embed_dim = 32
         self.cut_points = [value[0] for value in Config.data_shapes]
 
     def get_input_tensors(self):
@@ -364,6 +364,15 @@ class Algorithm:
             self.policy_cost,
             self.entropy_cost,
         ]
+
+        # print("@@@@@@@@@@@@@@loss@@@@@@@@@@@")
+        # print("self.value_cost: ", self.value_cost)
+        # print("self.policy_cost: ", self.policy_cost)
+        # print("self.var_beta: ", self.var_beta)
+        # print("self.entropy_cost: ", self.entropy_cost)
+        # print("self.cost_all: ", self.cost_all)
+        # print("@@@@@@@@@@@@@@loss@@@@@@@@@@@")
+
         return self.cost_all
 
     def _inference(
@@ -464,16 +473,44 @@ class Algorithm:
 
             for index in range(len(hero_main)):
                 vec_fc1_input_dim = int(np.prod(hero_main[index].get_shape()[1:]))
+
+##################################### 增加一个128维的FC ##########################################################
+                add_hero_weight = self._fc_weight_variable(
+                    shape=[vec_fc1_input_dim, 128], name="add_hero_main_weight"
+                )
+                add_hero_bias = self._bias_variable(
+                    shape=[128], name="add_hero_main_bias"
+                )
+                add_hero_result = tf.nn.relu(
+                    (tf.matmul(hero_main[index], add_hero_weight) + add_hero_bias),
+                    name="add_hero_main_result_%d" % index,
+                )
+
+#################################################################################################################
                 fc1_hero_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 64], name="fc1_hero_main_weight"
+                    shape=[128, 64], name="fc1_hero_main_weight"
                 )
                 fc1_hero_bias = self._bias_variable(
                     shape=[64], name="fc1_hero_main_bias"
                 )
                 fc1_hero_result = tf.nn.relu(
-                    (tf.matmul(hero_main[index], fc1_hero_weight) + fc1_hero_bias),
+                    (tf.matmul(add_hero_result, fc1_hero_weight) + fc1_hero_bias),
                     name="fc1_hero_main_result_%d" % index,
                 )
+
+                # fc1_hero_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 64], name="fc1_hero_main_weight"
+                # )
+                # fc1_hero_bias = self._bias_variable(
+                #     shape=[64], name="fc1_hero_main_bias"
+                # )
+                # fc1_hero_result = tf.nn.relu(
+                #     (tf.matmul(hero_main[index], fc1_hero_weight) + fc1_hero_bias),
+                #     name="fc1_hero_main_result_%d" % index,
+                # )
+
+#################################################################################################################
+
 
                 fc2_hero_weight = self._fc_weight_variable(
                     shape=[64, 32], name="fc2_hero_main_weight"
@@ -505,19 +542,44 @@ class Algorithm:
             hero_emy_result_list = []
             for index in range(len(hero_emy)):
                 vec_fc1_input_dim = int(np.prod(hero_emy[index].get_shape()[1:]))
-                fc1_hero_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 512], name="fc1_hero_weight"
+
+##################################### 增加一个1024维的FC ##########################################################
+                add_hero_weight = self._fc_weight_variable(
+                    shape=[vec_fc1_input_dim, 1024], name="add_hero_emy_weight"
                 )
-                fc1_hero_bias = self._bias_variable(shape=[512], name="fc1_hero_bias")
+                add_hero_bias = self._bias_variable(
+                    shape=[1024], name="add_hero_emy_bias"
+                )
+                add_hero_result = tf.nn.relu(
+                    (tf.matmul(hero_emy[index], add_hero_weight) + add_hero_bias),
+                    name="add_hero_emy_result_%d" % index,
+                )
+
+#################################################################################################################
+                fc1_hero_weight = self._fc_weight_variable(
+                    shape=[1024, 512], name="fc1_hero_emy_weight"
+                )
+                fc1_hero_bias = self._bias_variable(shape=[512], name="fc1_hero_emy_bias")
                 fc1_hero_result = tf.nn.relu(
-                    (tf.matmul(hero_emy[index], fc1_hero_weight) + fc1_hero_bias),
+                    (tf.matmul(add_hero_result, fc1_hero_weight) + fc1_hero_bias),
                     name="fc1_hero_emy_result_%d" % index,
                 )
 
+                # fc1_hero_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 512], name="fc1_hero_weight"
+                # )
+                # fc1_hero_bias = self._bias_variable(shape=[512], name="fc1_hero_emy_bias")
+                # fc1_hero_result = tf.nn.relu(
+                #     (tf.matmul(hero_emy[index], fc1_hero_weight) + fc1_hero_bias),
+                #     name="fc1_hero_emy_result_%d" % index,
+                # )
+#################################################################################################################
+
+
                 fc2_hero_weight = self._fc_weight_variable(
-                    shape=[512, 256], name="fc2_hero_weight"
+                    shape=[512, 256], name="fc2_hero_emy_weight"
                 )
-                fc2_hero_bias = self._bias_variable(shape=[256], name="fc2_hero_bias")
+                fc2_hero_bias = self._bias_variable(shape=[256], name="fc2_hero_emy_bias")
                 fc2_hero_result = tf.nn.relu(
                     (tf.matmul(fc1_hero_result, fc2_hero_weight) + fc2_hero_bias),
                     name="fc2_hero_emy_result_%d" % index,
@@ -561,19 +623,45 @@ class Algorithm:
             hero_frd_result_list = []
             for index in range(len(hero_frd)):
                 vec_fc1_input_dim = int(np.prod(hero_frd[index].get_shape()[1:]))
-                fc1_hero_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 512], name="fc1_hero_weight"
+
+##################################### 增加一个1024维的FC ##########################################################
+                add_hero_weight = self._fc_weight_variable(
+                    shape=[vec_fc1_input_dim, 1024], name="add_hero_frd_weight"
                 )
-                fc1_hero_bias = self._bias_variable(shape=[512], name="fc1_hero_bias")
+                add_hero_bias = self._bias_variable(
+                    shape=[1024], name="add_hero_frd_bias"
+                )
+                add_hero_result = tf.nn.relu(
+                    (tf.matmul(hero_frd[index], add_hero_weight) + add_hero_bias),
+                    name="add_hero_frd_result_%d" % index,
+                )
+
+#################################################################################################################
+                fc1_hero_weight = self._fc_weight_variable(
+                    shape=[1024, 512], name="fc1_hero_frd_weight"
+                )
+                fc1_hero_bias = self._bias_variable(shape=[512], name="fc1_hero_frd_bias")
                 fc1_hero_result = tf.nn.relu(
-                    (tf.matmul(hero_frd[index], fc1_hero_weight) + fc1_hero_bias),
+                    (tf.matmul(add_hero_result, fc1_hero_weight) + fc1_hero_bias),
                     name="fc1_hero_frd_result_%d" % index,
                 )
+
+
+                # fc1_hero_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 512], name="fc1_hero_weight"
+                # )
+                # fc1_hero_bias = self._bias_variable(shape=[512], name="fc1_hero_frd_bias")
+                # fc1_hero_result = tf.nn.relu(
+                #     (tf.matmul(hero_frd[index], fc1_hero_weight) + fc1_hero_bias),
+                #     name="fc1_hero_frd_result_%d" % index,
+                # )
+#################################################################################################################
+
 
                 fc2_hero_weight = self._fc_weight_variable(
                     shape=[512, 256], name="fc2_hero_weight"
                 )
-                fc2_hero_bias = self._bias_variable(shape=[256], name="fc2_hero_bias")
+                fc2_hero_bias = self._bias_variable(shape=[256], name="fc2_hero_frd_bias")
                 fc2_hero_result = tf.nn.relu(
                     (tf.matmul(fc1_hero_result, fc2_hero_weight) + fc2_hero_bias),
                     name="fc2_hero_frd_result_%d" % index,
@@ -618,11 +706,13 @@ class Algorithm:
             soldier_1_result_list = []
             for index in range(len(soldier_1_10)):
                 vec_fc1_input_dim = int(np.prod(soldier_1_10[index].get_shape()[1:]))
+
+##################################### 直接修改维度为128 ##############################################################
                 fc1_soldier_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 64], name="fc1_soldier_weight"
+                    shape=[vec_fc1_input_dim, 128], name="fc1_soldier_1_weight"
                 )
                 fc1_soldier_bias = self._bias_variable(
-                    shape=[64], name="fc1_soldier_bias"
+                    shape=[128], name="fc1_soldier_1_bias"
                 )
                 fc1_soldier_result = tf.nn.relu(
                     (
@@ -631,12 +721,30 @@ class Algorithm:
                     ),
                     name="fc1_soldier_1_result_%d" % index,
                 )
-
                 fc2_soldier_weight = self._fc_weight_variable(
-                    shape=[64, 64], name="fc2_soldier_weight"
+                    shape=[128, 64], name="fc2_soldier_1_weight"
                 )
+                # fc1_soldier_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 64], name="fc1_soldier_weight"
+                # )
+                # fc1_soldier_bias = self._bias_variable(
+                #     shape=[64], name="fc1_soldier_bias"
+                # )
+                # fc1_soldier_result = tf.nn.relu(
+                #     (
+                #         tf.matmul(soldier_1_10[index], fc1_soldier_weight)
+                #         + fc1_soldier_bias
+                #     ),
+                #     name="fc1_soldier_1_result_%d" % index,
+                # )
+                # fc2_soldier_weight = self._fc_weight_variable(
+                #     shape=[64, 64], name="fc2_soldier_1_weight"
+                # )
+#################################################################################################################
+
+
                 fc2_soldier_bias = self._bias_variable(
-                    shape=[64], name="fc2_soldier_bias"
+                    shape=[64], name="fc2_soldier_1_bias"
                 )
                 fc2_soldier_result = tf.nn.relu(
                     (
@@ -686,11 +794,13 @@ class Algorithm:
             soldier_2_result_list = []
             for index in range(len(soldier_11_20)):
                 vec_fc1_input_dim = int(np.prod(soldier_11_20[index].get_shape()[1:]))
+
+##################################### 直接维度为128 ##########################################################
                 fc1_soldier_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 64], name="fc1_soldier_weight"
+                    shape=[vec_fc1_input_dim, 128], name="fc1_soldier_2_weight"
                 )
                 fc1_soldier_bias = self._bias_variable(
-                    shape=[64], name="fc1_soldier_bias"
+                    shape=[128], name="fc1_soldier_2_bias"
                 )
                 fc1_soldier_result = tf.nn.relu(
                     (
@@ -699,12 +809,30 @@ class Algorithm:
                     ),
                     name="fc1_soldier_2_result_%d" % index,
                 )
-
                 fc2_soldier_weight = self._fc_weight_variable(
-                    shape=[64, 64], name="fc2_soldier_weight"
+                    shape=[128, 64], name="fc2_soldier_2_weight"
                 )
+                # fc1_soldier_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 64], name="fc1_soldier_2_weight"
+                # )
+                # fc1_soldier_bias = self._bias_variable(
+                #     shape=[64], name="fc1_soldier_2_bias"
+                # )
+                # fc1_soldier_result = tf.nn.relu(
+                #     (
+                #         tf.matmul(soldier_11_20[index], fc1_soldier_weight)
+                #         + fc1_soldier_bias
+                #     ),
+                #     name="fc1_soldier_2_result_%d" % index,
+                # )
+                # fc2_soldier_weight = self._fc_weight_variable(
+                #     shape=[64, 64], name="fc2_soldier_2_weight"
+                # )
+#################################################################################################################
+
+
                 fc2_soldier_bias = self._bias_variable(
-                    shape=[64], name="fc2_soldier_bias"
+                    shape=[64], name="fc2_soldier_2_bias"
                 )
                 fc2_soldier_result = tf.nn.relu(
                     (
@@ -757,19 +885,35 @@ class Algorithm:
             organ_1_result_list = []
             for index in range(len(organ_1_2)):
                 vec_fc1_input_dim = int(np.prod(organ_1_2[index].get_shape()[1:]))
+
+
+##################################### 直接维度为128 ##########################################################
                 fc1_organ_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 64], name="fc1_organ_weight"
+                    shape=[vec_fc1_input_dim, 128], name="fc1_organ_1_weight"
                 )
-                fc1_organ_bias = self._bias_variable(shape=[64], name="fc1_organ_bias")
+                fc1_organ_bias = self._bias_variable(shape=[128], name="fc1_organ_1_bias")
                 fc1_organ_result = tf.nn.relu(
                     (tf.matmul(organ_1_2[index], fc1_organ_weight) + fc1_organ_bias),
                     name="fc1_organ_1_result_%d" % index,
                 )
-
                 fc2_organ_weight = self._fc_weight_variable(
-                    shape=[64, 64], name="fc2_organ_weight"
+                    shape=[128, 64], name="fc2_organ_1_weight"
                 )
-                fc2_organ_bias = self._bias_variable(shape=[64], name="fc2_organ_bias")
+                # fc1_organ_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 64], name="fc1_organ_weight"
+                # )
+                # fc1_organ_bias = self._bias_variable(shape=[64], name="fc1_organ_bias")
+                # fc1_organ_result = tf.nn.relu(
+                #     (tf.matmul(organ_1_2[index], fc1_organ_weight) + fc1_organ_bias),
+                #     name="fc1_organ_1_result_%d" % index,
+                # )
+                # fc2_organ_weight = self._fc_weight_variable(
+                #     shape=[64, 64], name="fc2_organ_1_weight"
+                # )
+#################################################################################################################
+
+
+                fc2_organ_bias = self._bias_variable(shape=[64], name="fc2_organ_1_bias")
                 fc2_organ_result = tf.nn.relu(
                     (tf.matmul(fc1_organ_result, fc2_organ_weight) + fc2_organ_bias),
                     name="fc2_organ_1_result_%d" % index,
@@ -810,19 +954,35 @@ class Algorithm:
             organ_2_result_list = []
             for index in range(len(organ_3_4)):
                 vec_fc1_input_dim = int(np.prod(organ_3_4[index].get_shape()[1:]))
+
+##################################### 直接维度为128 ##########################################################
                 fc1_organ_weight = self._fc_weight_variable(
-                    shape=[vec_fc1_input_dim, 64], name="fc1_organ_weight"
+                    shape=[vec_fc1_input_dim, 128], name="fc1_organ_2_weight"
                 )
-                fc1_organ_bias = self._bias_variable(shape=[64], name="fc1_organ_bias")
+                fc1_organ_bias = self._bias_variable(shape=[128], name="fc1_organ_2_bias")
                 fc1_organ_result = tf.nn.relu(
                     (tf.matmul(organ_3_4[index], fc1_organ_weight) + fc1_organ_bias),
                     name="fc1_organ_2_result_%d" % index,
                 )
-
                 fc2_organ_weight = self._fc_weight_variable(
-                    shape=[64, 64], name="fc2_organ_weight"
+                    shape=[128, 64], name="fc2_organ_2_weight"
                 )
-                fc2_organ_bias = self._bias_variable(shape=[64], name="fc2_organ_bias")
+                # fc1_organ_weight = self._fc_weight_variable(
+                #     shape=[vec_fc1_input_dim, 64], name="fc1_organ_weight"
+                # )
+                # fc1_organ_bias = self._bias_variable(shape=[64], name="fc1_organ_bias")
+                # fc1_organ_result = tf.nn.relu(
+                #     (tf.matmul(organ_3_4[index], fc1_organ_weight) + fc1_organ_bias),
+                #     name="fc1_organ_2_result_%d" % index,
+                # )
+
+                # fc2_organ_weight = self._fc_weight_variable(
+                #     shape=[64, 64], name="fc2_organ_weight"
+                # )
+#################################################################################################################
+
+
+                fc2_organ_bias = self._bias_variable(shape=[64], name="fc2_organ_2_bias")
                 fc2_organ_result = tf.nn.relu(
                     (tf.matmul(fc1_organ_result, fc2_organ_weight) + fc2_organ_bias),
                     name="fc2_organ_2_result_%d" % index,
@@ -880,14 +1040,34 @@ class Algorithm:
             )
         with tf.variable_scope("public_weicao"):
             public_input_dim = int(np.prod(concat_result.get_shape()[1:]))
+
+##################################### 增加一个1024维的FC ##########################################################
+            add_public_weight = self._fc_weight_variable(
+                shape=[public_input_dim, 1024], name="add_public_weight"
+            )
+            add_public_bias = self._bias_variable(shape=[1024], name="add_public_bias")
+            add_public_result = tf.nn.relu(
+                (tf.matmul(concat_result, add_public_weight) + add_public_bias),
+                name="add_public_result",
+            )
             fc_public_weight = self._fc_weight_variable(
-                shape=[public_input_dim, 512], name="fc_public_weight"
+                shape=[1024, 512], name="fc_public_weight"
             )
             fc_public_bias = self._bias_variable(shape=[512], name="fc_public_bias")
             fc_public_result = tf.nn.relu(
-                (tf.matmul(concat_result, fc_public_weight) + fc_public_bias),
+                (tf.matmul(add_public_result, fc_public_weight) + fc_public_bias),
                 name="fc_public_result",
             )
+            # fc_public_weight = self._fc_weight_variable(
+            #     shape=[public_input_dim, 512], name="fc_public_weight"
+            # )
+            # fc_public_bias = self._bias_variable(shape=[512], name="fc_public_bias")
+            # fc_public_result = tf.nn.relu(
+            #     (tf.matmul(concat_result, fc_public_weight) + fc_public_bias),
+            #     name="fc_public_result",
+            # )
+#################################################################################################################
+
             # for lstm
             reshape_fc_public_result = tf.reshape(
                 fc_public_result,
@@ -895,11 +1075,39 @@ class Algorithm:
                 name="reshape_fc_public_result",
             )
 
-        with tf.variable_scope("public_lstm"):
+
+##################################### 增加一层LSTM ##########################################################
+        with tf.variable_scope("public_lstm_1"):
             lstm_cell = tf.contrib.rnn.BasicLSTMCell(
                 num_units=self.lstm_unit_size, forget_bias=1.0
             )
-            with tf.variable_scope("rnn"):
+            with tf.variable_scope("rnn_1"):
+                state = lstm_initial_state
+                lstm_output_list = []
+                for step in range(self.lstm_time_steps):
+                    lstm_output, state = lstm_cell(
+                        reshape_fc_public_result[:, step, :], state
+                    )
+                    lstm_output_list.append(lstm_output)
+                lstm_outputs = tf.concat(lstm_output_list, axis=1, name="lstm_outputs")
+                self.lstm_cell_output = state.c
+                self.lstm_hidden_output = state.h
+            # reshape_lstm_outputs_result = tf.reshape(
+            #     lstm_outputs,
+            #     [-1, self.lstm_unit_size],
+            #     name="reshape_lstm_outputs_result",
+            # )
+            reshape_fc_public_result = tf.reshape(
+                lstm_outputs,
+                [-1, self.lstm_time_steps, 512],
+                name="reshape_lstm_outputs_result",
+            )
+
+        with tf.variable_scope("public_lstm_2"):
+            lstm_cell = tf.contrib.rnn.BasicLSTMCell(
+                num_units=self.lstm_unit_size, forget_bias=1.0
+            )
+            with tf.variable_scope("rnn_2"):
                 state = lstm_initial_state
                 lstm_output_list = []
                 for step in range(self.lstm_time_steps):
@@ -915,12 +1123,29 @@ class Algorithm:
                 [-1, self.lstm_unit_size],
                 name="reshape_lstm_outputs_result",
             )
+#################################################################################################################
+
+
 
         #  action layer # #
         for index in range(0, len(self.label_size_list) - 1):
             with tf.variable_scope("fc2_label_%d" % (index)):
+##################################### 每一个都增加一个128维的FC ##########################################################
+                add_fc2_label_weight = self._fc_weight_variable(
+                    shape=[self.lstm_unit_size, 128],
+                    name="add_fc2_label_%d_weight" % (index),
+                )
+                add_fc2_label_bias = self._bias_variable(
+                    shape=[128],
+                    name="add_fc2_label_%d_bias" % (index),
+                )
+                add_fc2_label_result = tf.add(
+                    tf.matmul(reshape_lstm_outputs_result, add_fc2_label_weight),
+                    add_fc2_label_bias,
+                    name="add_fc2_label_%d_result" % (index),
+                )
                 fc2_label_weight = self._fc_weight_variable(
-                    shape=[self.lstm_unit_size, self.label_size_list[index]],
+                    shape=[128, self.label_size_list[index]],
                     name="fc2_label_%d_weight" % (index),
                 )
                 fc2_label_bias = self._bias_variable(
@@ -928,15 +1153,46 @@ class Algorithm:
                     name="fc2_label_%d_bias" % (index),
                 )
                 fc2_label_result = tf.add(
-                    tf.matmul(reshape_lstm_outputs_result, fc2_label_weight),
+                    tf.matmul(add_fc2_label_result, fc2_label_weight),
                     fc2_label_bias,
                     name="fc2_label_%d_result" % (index),
                 )
+                # fc2_label_weight = self._fc_weight_variable(
+                #     shape=[self.lstm_unit_size, self.label_size_list[index]],
+                #     name="fc2_label_%d_weight" % (index),
+                # )
+                # fc2_label_bias = self._bias_variable(
+                #     shape=[self.label_size_list[index]],
+                #     name="fc2_label_%d_bias" % (index),
+                # )
+                # fc2_label_result = tf.add(
+                #     tf.matmul(reshape_lstm_outputs_result, fc2_label_weight),
+                #     fc2_label_bias,
+                #     name="fc2_label_%d_result" % (index),
+                # )
                 result_list.append(fc2_label_result)
+#################################################################################################################
+
+
+
 
         with tf.variable_scope("fc2_label_%d" % (len(self.label_size_list) - 1)):
+##################################### 增加一个128维的FC ##########################################################
+            add_fc2_label_weight = self._fc_weight_variable(
+                shape=[self.lstm_unit_size, 128],
+                name="add_fc2_label_%d_weight" % (len(self.label_size_list) - 1),
+            )
+            add_fc2_label_bias = self._bias_variable(
+                shape=[128],
+                name="add_fc2_label_%d_bias" % (len(self.label_size_list) - 1),
+            )
+            add_fc2_label_result = tf.add(
+                tf.matmul(reshape_lstm_outputs_result, add_fc2_label_weight),
+                add_fc2_label_bias,
+                name="add_fc2_label_%d_result" % (len(self.label_size_list) - 1),
+            )
             fc2_label_weight = self._fc_weight_variable(
-                shape=[self.lstm_unit_size, self.target_embed_dim],
+                shape=[128, self.target_embed_dim],
                 name="fc2_label_%d_weight" % (len(self.label_size_list) - 1),
             )
             fc2_label_bias = self._bias_variable(
@@ -944,10 +1200,25 @@ class Algorithm:
                 name="fc2_label_%d_bias" % (len(self.label_size_list) - 1),
             )
             fc2_label_result = tf.add(
-                tf.matmul(reshape_lstm_outputs_result, fc2_label_weight),
+                tf.matmul(add_fc2_label_result, fc2_label_weight),
                 fc2_label_bias,
                 name="fc2_label_%d_result" % (len(self.label_size_list) - 1),
             )
+            # fc2_label_weight = self._fc_weight_variable(
+            #     shape=[self.lstm_unit_size, self.target_embed_dim],
+            #     name="fc2_label_%d_weight" % (len(self.label_size_list) - 1),
+            # )
+            # fc2_label_bias = self._bias_variable(
+            #     shape=[self.target_embed_dim],
+            #     name="fc2_label_%d_bias" % (len(self.label_size_list) - 1),
+            # )
+            # fc2_label_result = tf.add(
+            #     tf.matmul(reshape_lstm_outputs_result, fc2_label_weight),
+            #     fc2_label_bias,
+            #     name="fc2_label_%d_result" % (len(self.label_size_list) - 1),
+            # )
+#################################################################################################################
+
 
             for t in tar_embed_list:
                 print("t shape", t.shape)
@@ -972,18 +1243,46 @@ class Algorithm:
             )
             result_list.append(reshape_fc3_label_result)
 
+
+##################################### 增加一个128维的FC ##########################################################
+        with tf.variable_scope("add_value"):
+            add_value_weight = self._fc_weight_variable(
+                shape=[self.lstm_unit_size, 128], name="add_value_weight"
+            )
+            add_value_bias = self._bias_variable(shape=[128], name="add_value_bias")
+            add_value_result = tf.nn.relu(
+                (
+                    tf.matmul(reshape_lstm_outputs_result, add_value_weight)
+                    + add_value_bias
+                ),
+                name="add_value_result",
+            )
         with tf.variable_scope("fc1_value"):
             fc1_value_weight = self._fc_weight_variable(
-                shape=[self.lstm_unit_size, 64], name="fc1_value_weight"
+                shape=[128, 64], name="fc1_value_weight"
             )
             fc1_value_bias = self._bias_variable(shape=[64], name="fc1_value_bias")
             fc1_value_result = tf.nn.relu(
                 (
-                    tf.matmul(reshape_lstm_outputs_result, fc1_value_weight)
+                    tf.matmul(add_value_result, fc1_value_weight)
                     + fc1_value_bias
                 ),
                 name="fc1_value_result",
             )
+        # with tf.variable_scope("fc1_value"):
+        #     fc1_value_weight = self._fc_weight_variable(
+        #         shape=[self.lstm_unit_size, 64], name="fc1_value_weight"
+        #     )
+        #     fc1_value_bias = self._bias_variable(shape=[64], name="fc1_value_bias")
+        #     fc1_value_result = tf.nn.relu(
+        #         (
+        #             tf.matmul(reshape_lstm_outputs_result, fc1_value_weight)
+        #             + fc1_value_bias
+        #         ),
+        #         name="fc1_value_result",
+        #     )
+#################################################################################################################
+
 
         with tf.variable_scope("fc2_value"):
             fc2_value_weight = self._fc_weight_variable(
